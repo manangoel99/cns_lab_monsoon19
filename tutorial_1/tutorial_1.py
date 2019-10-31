@@ -34,7 +34,8 @@ class Simulator():
 		self.dt = step_size
 		self.mass = 6.6335209 * 1e-23
 		self.steps = steps
-		self.forces = [0 for i in range(N)]
+		self.forces = np.zeros((self.N, 3))
+		self.prev_forces = np.zeros((self.N, 3))
 
 
 	def initializePostions(self):
@@ -80,8 +81,8 @@ class Simulator():
 			for j in range(self.N):
 				if i != j:
 					self.forces[i] += self.ForceField(i, j)
-			self.velocities[i] = self.velocities[i] + (self.forces[i] / self.mass) * self.dt
-			self.positions[i] = self.positions[i] + self.velocities[i] * self.dt
+		self.velocities = self.velocities + (self.forces / self.mass) * self.dt
+		self.positions = self.positions + self.velocities * self.dt
 			
 
 	def velocityVerletIntegrate(self):
@@ -89,16 +90,16 @@ class Simulator():
 		apply velocity verlet integrator
 		'''
 		self.AllPositions.append(self.positions)
+		self.prev_forces = copy.copy(self.forces)
 
 		for i in range(self.N):
-			prev_forces = copy.copy(self.forces[i])
 			self.forces[i] = 0
 			for j in range(self.N):
 				if i != j:
 					self.forces[i] += self.ForceField(i, j)
 			
-			self.positions[i] = self.positions[i] + (self.velocities[i] * self.dt) + (1 / (2 * self.mass)) * self.forces[i] * (self.dt**2)
-			self.velocities[i] = self.velocities[i] + 1 / (2 * self.mass) * (prev_forces + self.forces[i]) * self.dt
+		self.positions = self.positions + (self.velocities * self.dt) + (1 / (2 * self.mass)) * self.forces * (self.dt**2)
+		self.velocities = self.velocities + 1 / (2 * self.mass) * (self.prev_forces + self.forces) * self.dt
 
 	def totalEnergy(self):
 		'''
